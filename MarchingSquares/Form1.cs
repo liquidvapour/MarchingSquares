@@ -75,6 +75,7 @@ namespace MarchingSquares
                     g.DrawLine(pen, x + halfSquareSize, y, x + squareSize, y + halfSquareSize);
                     break;
                 case 12:
+                    g.DrawLine(pen, x, y + halfSquareSize, x + squareSize, y + halfSquareSize);
                     break;
                 case 13:
                     g.DrawLine(pen, x + squareSize, y + halfSquareSize, x + halfSquareSize, y + squareSize);
@@ -139,19 +140,14 @@ namespace MarchingSquares
 
         private int x = 0;
         private int y = 0;
-        private float r = 20.0f;
-        private const int width = 40;
-        private const int halfWidth = width / 2;
-        private Rectangle rect = new Rectangle(0, 0, width, width);
-        private const int squareSize = 10;
+        private float r = 63.0f;
+        private const int squareSize = 8;
         private const int halfSquareSize = squareSize / 2;
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             x = e.X;
             y = e.Y;
-            rect.X = e.X - halfWidth;
-            rect.Y = e.Y - halfWidth;
             Invalidate();
         }
     }
