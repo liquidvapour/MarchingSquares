@@ -38,17 +38,22 @@ namespace MarchingSquares
             switch (contourCase)
             {
                 case 0:
+                case 15:
                     break;
                 case 1:
+                case 14:
                     g.DrawLine(pen, x, y + halfSquareSize, x + halfSquareSize, y + squareSize);
                     break;
                 case 2:
+                case 13:
                     g.DrawLine(pen, x + squareSize, y + halfSquareSize, x + halfSquareSize, y + squareSize);
                     break;
                 case 3:
+                case 12:
                     g.DrawLine(pen, x, y + halfSquareSize, x + squareSize, y + halfSquareSize);
                     break;
                 case 4:
+                case 11:
                     g.DrawLine(pen, x + halfSquareSize, y, x + squareSize, y + halfSquareSize);
                     break;
                 case 5:
@@ -56,34 +61,16 @@ namespace MarchingSquares
                     g.DrawLine(pen, x + halfSquareSize, y + squareSize, x + squareSize, y + halfSquareSize);
                     break;
                 case 6:
+                case 9:
                     g.DrawLine(pen, x + halfSquareSize, y, x + halfSquareSize, y + squareSize);
                     break;
                 case 7:
-                    g.DrawLine(pen, x, y + halfSquareSize, x + halfSquareSize, y);
-                    break;
                 case 8:
                     g.DrawLine(pen, x, y + halfSquareSize, x + halfSquareSize, y);
-                    break;
-                case 9:
-                    g.DrawLine(pen, x + halfSquareSize, y, x + halfSquareSize, y + squareSize);
                     break;
                 case 10:
                     g.DrawLine(pen, x, y + halfSquareSize, x + halfSquareSize, y + squareSize);
                     g.DrawLine(pen, x + halfSquareSize, y, x + squareSize, y + halfSquareSize);
-                    break;
-                case 11:
-                    g.DrawLine(pen, x + halfSquareSize, y, x + squareSize, y + halfSquareSize);
-                    break;
-                case 12:
-                    g.DrawLine(pen, x, y + halfSquareSize, x + squareSize, y + halfSquareSize);
-                    break;
-                case 13:
-                    g.DrawLine(pen, x + squareSize, y + halfSquareSize, x + halfSquareSize, y + squareSize);
-                    break;
-                case 14:
-                    g.DrawLine(pen, x, y + halfSquareSize, x + halfSquareSize, y + squareSize);
-                    break;
-                case 15:
                     break;
             }
         }
