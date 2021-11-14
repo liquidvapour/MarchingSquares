@@ -25,16 +25,16 @@ namespace MarchingSquares
             {
                 for (int x = 0; x < ClientSize.Width; x += squareSize)
                 {
-                    var contourCase = GetContourCase(x, y);
-                    DrawCase(contourCase, x, y, e.Graphics);
+                    DrawCase(GetContourCase(x, y, 0.5f), x, y, e.Graphics, Pens.DarkRed);
+                    DrawCase(GetContourCase(x, y, 1), x, y, e.Graphics,Pens.Red);
+                    DrawCase(GetContourCase(x, y, 1.25f), x, y, e.Graphics, Pens.IndianRed);
                 }
-                
+
             }
         }
 
-        private Pen pen = Pens.Black;
 
-        private void DrawCase(int contourCase, int x, int y, Graphics g)
+        private void DrawCase(int contourCase, int x, int y, Graphics g, Pen pen)
         {
 
             switch (contourCase)
@@ -99,44 +99,44 @@ namespace MarchingSquares
         }
 
 
-        private bool TopLeftIn(int ix, int iy)
+        private bool TopLeftIn(int ix, int iy, float threshold)
         {
             var dist = f(ix, iy);
 
-            return dist <= 1;
+            return dist <= threshold;
 
         }
 
-        private bool TopRightIn(int ix, int iy)
+        private bool TopRightIn(int ix, int iy, float threshold)
         {
             var dist = f(ix + squareSize, iy);
 
-            return dist <= 1;
+            return dist <= threshold;
 
         }
 
-        private bool BottomLeftIn(int ix, int iy)
+        private bool BottomLeftIn(int ix, int iy, float threshold)
         {
             var dist = f(ix , iy + squareSize);
 
-            return dist <= 1;
+            return dist <= threshold;
 
         }
 
-        private bool BottomRightIn(int ix, int iy)
+        private bool BottomRightIn(int ix, int iy, float threshold)
         {
             var dist = f(ix + squareSize, iy + squareSize);
 
-            return dist <= 1;
+            return dist <= threshold;
 
         }
 
-        private int GetContourCase(int ix, int iy)
+        private int GetContourCase(int ix, int iy, float threshold)
         {
-            var bl = BottomLeftIn(ix, iy)? 1: 0;
-            var br = BottomRightIn(ix, iy)? 2: 0;
-            var tr = TopRightIn(ix, iy)? 4: 0;
-            var tl = TopLeftIn(ix, iy)? 8: 0;
+            var bl = BottomLeftIn(ix, iy, threshold)? _blIndex: 0;
+            var br = BottomRightIn(ix, iy, threshold)? _brIndex: 0;
+            var tr = TopRightIn(ix, iy, threshold)? _trIndex: 0;
+            var tl = TopLeftIn(ix, iy, threshold)? _tlIndex: 0;
 
             return bl + br + tr + tl;
         }
@@ -146,6 +146,10 @@ namespace MarchingSquares
         private float r = 63.0f;
         private const int squareSize = 8;
         private const int halfSquareSize = squareSize / 2;
+        private const int _blIndex = 1;
+        private const int _brIndex = 2;
+        private const int _trIndex = 4;
+        private const int _tlIndex = 8;
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
