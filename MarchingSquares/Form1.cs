@@ -109,8 +109,12 @@ namespace MarchingSquares
                 }
                 case 5:
                 {
-                    g.DrawLine(pen, x, y + HalfSquareSize, x + HalfSquareSize, y);
-                    g.DrawLine(pen, x + HalfSquareSize, y + SquareSize, x + SquareSize, y + HalfSquareSize);
+                    var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL);
+                    var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR);  
+                    g.DrawLine(pen, x, startY, endX, y);
+                    var startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR);
+                    var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, startX, y + SquareSize, x + SquareSize, endY);
                     break;
                 }   
                 case 6:
@@ -130,9 +134,15 @@ namespace MarchingSquares
                     break;
                 }  
                 case 10:
-                    g.DrawLine(pen, x, y + HalfSquareSize, x + HalfSquareSize, y + SquareSize);
-                    g.DrawLine(pen, x + HalfSquareSize, y, x + SquareSize, y + HalfSquareSize);
+                {
+                    var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL);
+                    var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, x, startY, endX, y + SquareSize);
+                    var startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR);
+                    var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, startX, y, x + SquareSize, endY);
                     break;
+                }
             }
         }
 
