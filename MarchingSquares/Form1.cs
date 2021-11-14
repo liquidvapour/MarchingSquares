@@ -37,62 +37,101 @@ namespace MarchingSquares
             _f = functionProvider.CalculateDistance;
         }
 
+        private readonly (Pen Pens, Brush Brush) _red = (new Pen(Color.Red, 3), Brushes.Red);
+
         protected override void OnPaint(PaintEventArgs e)
         {
+            e.Graphics.FillRectangle(Brushes.Aquamarine, ClientRectangle);
             for (var y = 0; y < ClientSize.Height; y+=SquareSize)
             {
                 for (var x = 0; x < ClientSize.Width; x += SquareSize)
                 {
-                    DrawCase(GetContourCase(x, y, 0.75f, _f).caseId, x, y, e.Graphics, (Pens.IndianRed, Brushes.IndianRed));
-                    DrawCase(GetContourCase(x, y, 1, _f).caseId, x, y, e.Graphics, (Pens.Red, Brushes.Red));
-                    DrawCase(GetContourCase(x, y, 1.5f, _f).caseId, x, y, e.Graphics, (Pens.DarkRed, Brushes.DarkRed));
+
+                    //DrawCase(GetContourCase(x, y, 0.75f, _f), x, y, e.Graphics, (Pens.IndianRed, Brushes.IndianRed));
+                    DrawCase(GetContourCase(x, y, 1, _f), x, y, e.Graphics, _red);
+                    //DrawCase(GetContourCase(x, y, 1.5f, _f), x, y, e.Graphics, (Pens.DarkRed, Brushes.DarkRed));
                 }
 
             }
         }
 
-
-        private void DrawCase(int contourCase, int x, int y, Graphics g, (Pen Pen, Brush Brush) color)
+        private float FindPoint(float xa, float xb, float ua, float ub)
         {
-            
-            switch (contourCase)
+            var uDiff = (ub - ua);
+            var topDiff = 1 - ua;
+            var factor = (topDiff / uDiff);
+            var widthInPixels = (xb - xa);
+            var pixelFactor = factor * widthInPixels;
+            var result = xa + pixelFactor;
+            return result;
+        }
+
+        private void DrawCase((int caseId, CellInfo cellInfo) contourCase, int x, int y, Graphics g, (Pen Pen, Brush Brush) color)
+        {
+            var (pen, brush) = color;
+            switch (contourCase.caseId)
             {
                 case 0:
                     break;
                 case 15:
-                    g.FillRectangle(color.Brush, x, y, SquareSize, SquareSize);
+                    //g.FillRectangle(brush, x, y, SquareSize, SquareSize);
                     break;
                 case 1:
                 case 14:
-                    g.DrawLine(color.Pen, x, y + HalfSquareSize, x + HalfSquareSize, y + SquareSize);
+                {   var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL);
+                    var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, x, startY, endX, y + SquareSize);
                     break;
+                }
                 case 2:
                 case 13:
-                    g.DrawLine(color.Pen, x + SquareSize, y + HalfSquareSize, x + HalfSquareSize, y + SquareSize);
+                {
+                    var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR);
+                    var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, x + SquareSize, startY, endX, y + SquareSize);
                     break;
+                }
                 case 3:
                 case 12:
-                    g.DrawLine(color.Pen, x, y + HalfSquareSize, x + SquareSize, y + HalfSquareSize);
+                {
+                    var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL);
+                    var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, x, startY, x + SquareSize, endY);
                     break;
+                }
                 case 4:
                 case 11:
-                    g.DrawLine(color.Pen, x + HalfSquareSize, y, x + SquareSize, y + HalfSquareSize);
+                {
+                    var startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR);
+                    var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, startX, y, x + SquareSize, endY);
                     break;
+                }
                 case 5:
-                    g.DrawLine(color.Pen, x, y + HalfSquareSize, x + HalfSquareSize, y);
-                    g.DrawLine(color.Pen, x + HalfSquareSize, y + SquareSize, x + SquareSize, y + HalfSquareSize);
+                {
+                    g.DrawLine(pen, x, y + HalfSquareSize, x + HalfSquareSize, y);
+                    g.DrawLine(pen, x + HalfSquareSize, y + SquareSize, x + SquareSize, y + HalfSquareSize);
                     break;
+                }   
                 case 6:
                 case 9:
-                    g.DrawLine(color.Pen, x + HalfSquareSize, y, x + HalfSquareSize, y + SquareSize);
+                {
+                    var startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR);
+                    var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR);
+                    g.DrawLine(pen, startX, y, endX, y + SquareSize);
                     break;
+                }
                 case 7:
                 case 8:
-                    g.DrawLine(color.Pen, x, y + HalfSquareSize, x + HalfSquareSize, y);
+                {
+                    var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL);
+                    var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR);
+                    g.DrawLine(pen, x, startY, endX, y);
                     break;
+                }  
                 case 10:
-                    g.DrawLine(color.Pen, x, y + HalfSquareSize, x + HalfSquareSize, y + SquareSize);
-                    g.DrawLine(color.Pen, x + HalfSquareSize, y, x + SquareSize, y + HalfSquareSize);
+                    g.DrawLine(pen, x, y + HalfSquareSize, x + HalfSquareSize, y + SquareSize);
+                    g.DrawLine(pen, x + HalfSquareSize, y, x + SquareSize, y + HalfSquareSize);
                     break;
             }
         }
@@ -102,7 +141,7 @@ namespace MarchingSquares
             return (dist >= threshold, dist);
         }
 
-        private static (bool inside, float u) TopLeftIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
+        private static (bool inside, float dist) TopLeftIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
             InsideThreshold(func(ix, iy), threshold);
 
         private static (bool inside, float dist) TopRightIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
@@ -114,14 +153,19 @@ namespace MarchingSquares
         private static (bool inside, float dist) BottomRightIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
             InsideThreshold(func(ix + SquareSize, iy + SquareSize), threshold);
 
-        private static (int caseId, Line[] lines) GetContourCase(int ix, int iy, float threshold, Func<float, float, float> func)
+        private static (int caseId, CellInfo cellInfo) GetContourCase(int ix, int iy, float threshold, Func<float, float, float> func)
         {
-            var bl = BottomLeftIn(ix, iy, threshold, func).inside? BLIndex: 0;
-            var br = BottomRightIn(ix, iy, threshold, func).inside ? BRIndex: 0;
-            var tr = TopRightIn(ix, iy, threshold, func).inside ? TRIndex: 0;
-            var tl = TopLeftIn(ix, iy, threshold, func).inside ? TLIndex: 0;
+            var bottomLeft = BottomLeftIn(ix, iy, threshold, func);
+            var blNum = bottomLeft.inside? BLIndex: 0;
+            var bottomRight = BottomRightIn(ix, iy, threshold, func);
+            var brNum = bottomRight.inside ? BRIndex: 0;
+            var topRight = TopRightIn(ix, iy, threshold, func);
+            var trNum = topRight.inside ? TRIndex: 0;
+            var topLeft = TopLeftIn(ix, iy, threshold, func);
+            var tlNum = topLeft.inside ? TLIndex: 0;
 
-            return (bl + br + tr + tl, new Line[0]);
+            var caseId = blNum + brNum + trNum + tlNum;
+            return (caseId, new CellInfo(bottomLeft.dist, bottomRight.dist, topRight.dist, topLeft.dist));
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
@@ -132,18 +176,18 @@ namespace MarchingSquares
         }
     }
 
-    internal readonly struct Line
+    internal readonly struct CellInfo
     {
-        public Line(float ax, float ay, float bx, float by)
+        public CellInfo(float bl, float br, float tr, float tl)
         {
-            AX = ax;
-            AY = ay;
-            BX = bx;
-            BY = by;
+            BL = bl;
+            BR = br;
+            TR = tr;
+            TL = tl;
         }
-        public float AX { get; }
-        public float AY { get; }
-        public float BX { get; }
-        public float BY { get; }
+        public float BL { get; }
+        public float BR { get; }
+        public float TR { get; }
+        public float TL { get; }
     }
 }
