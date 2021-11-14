@@ -13,8 +13,10 @@ namespace MarchingSquares
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             InitializeComponent();
-
+            f = BubbleFunc;
         }
+
+        private Func<float, float, float> f;
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -79,39 +81,53 @@ namespace MarchingSquares
         {
             var l = x - cx;
             var h = y - cy;
-            var dist = (float)Math.Sqrt(l * l + h * h);
-            return dist - r;
+            var dist = r / (float)Math.Sqrt(l * l + h * h);
+            return dist;
         }
+
+
+        private int ax = 100;
+        private int ay = 100;
+
+        private float BubbleFunc(float cx, float cy) => GetDistOverRadius(cx, cy, x, y, r) + GetDistOverRadius(cx, cy, ax, ay, r);
+
+        private static float GetDistOverRadius(float cx, float cy, int i, int j, float radius)
+        {
+            var al = i - cx;
+            var ah = j - cy;
+            return radius / (float) Math.Sqrt(al * al + ah * ah);
+        }
+
 
         private bool TopLeftIn(int ix, int iy)
         {
-            var dist = CircleFunc(ix, iy);
+            var dist = f(ix, iy);
 
-            return dist <= 0;
+            return dist <= 1;
 
         }
 
         private bool TopRightIn(int ix, int iy)
         {
-            var dist = CircleFunc(ix + squareSize, iy);
+            var dist = f(ix + squareSize, iy);
 
-            return dist <= 0;
+            return dist <= 1;
 
         }
 
         private bool BottomLeftIn(int ix, int iy)
         {
-            var dist = CircleFunc(ix , iy + squareSize);
+            var dist = f(ix , iy + squareSize);
 
-            return dist <= 0;
+            return dist <= 1;
 
         }
 
         private bool BottomRightIn(int ix, int iy)
         {
-            var dist = CircleFunc(ix + squareSize, iy + squareSize);
+            var dist = f(ix + squareSize, iy + squareSize);
 
-            return dist <= 0;
+            return dist <= 1;
 
         }
 
