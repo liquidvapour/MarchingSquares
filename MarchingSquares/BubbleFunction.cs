@@ -6,8 +6,8 @@ namespace MarchingSquares
     {
         private readonly Context _context;
         private const float R = 64.0f;
-        private const int OtherBlobX = 100;
-        private const int OtherBlobY = 100;
+        private const int OtherBlobX = 200;
+        private const int OtherBlobY = 200;
 
         public int MouseX { get; set; }
 
