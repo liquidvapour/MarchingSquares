@@ -6,7 +6,7 @@ namespace MarchingSquares
 {
     public partial class MainForm : Form
     {
-        private const int SquareSize = 16;
+        private const int SquareSize = 8;
         private const int HalfSquareSize = SquareSize / 2;
         private const int BLIndex = 1;
         private const int BRIndex = 2;
@@ -16,7 +16,11 @@ namespace MarchingSquares
         private Func<float, float, float> _f;
 
         private readonly BubbleFunction _bubbleFunction;
-        private readonly Context _context;
+
+        private readonly (Pen Pens, Brush Brush) _red = (new Pen(Color.Red, 3), Brushes.Red);
+        private readonly (Pen Pens, Brush Brush) _indianRed = (new Pen(Color.IndianRed, 3), Brushes.IndianRed);
+        private readonly (Pen Pens, Brush Brush) _paleVioletRed = (new Pen(Color.PaleVioletRed, 3), Brushes.PaleVioletRed);
+        private readonly Bubbles _bubbles;
 
 
         public MainForm()
@@ -26,8 +30,10 @@ namespace MarchingSquares
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             InitializeComponent();
-            _context = new Context();
-            _bubbleFunction = new BubbleFunction(_context);
+            _bubbles = new Bubbles(
+                (64.0f, 0.0f, 0.0f),
+                (32, 300, 300));
+            _bubbleFunction = new BubbleFunction(_bubbles);
 
             SetDistanceFunction(_bubbleFunction);
         }
@@ -37,9 +43,6 @@ namespace MarchingSquares
             _f = functionProvider.CalculateDistance;
         }
 
-        private readonly (Pen Pens, Brush Brush) _red = (new Pen(Color.Red, 3), Brushes.Red);
-        private readonly (Pen Pens, Brush Brush) _indianRed = (new Pen(Color.IndianRed, 3), Brushes.IndianRed);
-        private readonly (Pen Pens, Brush Brush) _paleVioletRed = (new Pen(Color.PaleVioletRed, 3), Brushes.PaleVioletRed);
 
         protected override void OnPaint(PaintEventArgs e)
         {
@@ -48,12 +51,11 @@ namespace MarchingSquares
             {
                 for (var x = 0; x < ClientSize.Width; x += SquareSize)
                 {
-                    DrawCase(GetContourCase(x, y, 0.75f, _f), x, y, e.Graphics, _red, 0.75f);
                     DrawCase(GetContourCase(x, y, 1, _f), x, y, e.Graphics, _indianRed, 1);
-                    DrawCase(GetContourCase(x, y, 1.5f, _f), x, y, e.Graphics, _paleVioletRed, 1.5f);
                 }
 
             }
+            Invalidate();
         }
 
         private float FindPoint(float xa, float xb, float ua, float ub, float f) => xa + (f - ua) / (ub - ua) * (xb - xa);
@@ -172,9 +174,9 @@ namespace MarchingSquares
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            _context.MouseX = e.X;
-            _context.MouseY = e.Y;
-            Invalidate();
+            _bubbles.X[0] = e.X;
+            _bubbles.Y[0] = e.Y;
+            //Invalidate();
         }
     }
 
