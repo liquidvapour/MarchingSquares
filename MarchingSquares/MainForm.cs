@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Drawing;
 using System.Windows.Forms;
 
 namespace MarchingSquares
 {
+    
     public partial class MainForm : Form
     {
         private const int SquareSize = 8;
@@ -47,18 +49,147 @@ namespace MarchingSquares
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.FillRectangle(Brushes.Aquamarine, ClientRectangle);
+            var pointQ = ImmutableQueue<(float startX, float startY, float endX, float endY)>.Empty;
             for (var y = 0; y < ClientSize.Height; y+=SquareSize)
             {
                 for (var x = 0; x < ClientSize.Width; x += SquareSize)
                 {
-                    DrawCase(GetContourCase(x, y, 1, _f), x, y, e.Graphics, _indianRed, 1);
+                    var f = 1.0f;
+                    var contourCase = GetContourCase(x, y, f, _f);
+                    var r = GetCasePoints(contourCase, x, y, f);
+
+                    while (!r.IsEmpty)
+                    {
+                        r = r.Dequeue(out var i);
+                        pointQ = pointQ.Enqueue(i);
+                    }
+                    //DrawCase(contourCase, x, y, e.Graphics, _indianRed, f);
                 }
 
             }
+
+            DrawLines(pointQ, _indianRed, e.Graphics);
             Invalidate();
         }
 
-        private float FindPoint(float xa, float xb, float ua, float ub, float f) => xa + (f - ua) / (ub - ua) * (xb - xa);
+        private void DrawLines(
+            ImmutableQueue<(float startX, float startY, float endX, float endY)> pointQ, 
+            (Pen Pens, Brush Brush) color, 
+            Graphics e)
+        {
+            while (!pointQ.IsEmpty)
+            {
+                pointQ = pointQ.Dequeue(out var i);
+                e.DrawLine(color.Pens, i.startX, i.startY, i.endX, i.endY);
+            }
+        }
+
+        private float FindPoint(float xa, float xb, float ua, float ub, float f) => 
+            xa + (f - ua) / (ub - ua) * (xb - xa);
+
+        private ImmutableQueue<(float startX, float startY, float endX, float endY)> GetCasePoints((int caseId, CellInfo cellInfo) contourCase, float x, float y, float f)
+        {
+            var q = ImmutableQueue<(float startX, float startY, float endX, float endY)>.Empty;
+            switch (contourCase.caseId)
+            {
+                case 0:
+                    break;
+                case 15:
+                    //g.FillRectangle(brush, x, y, SquareSize, SquareSize);
+                    break;
+                case 1:
+                case 14:
+                    {
+                        var startX = x;
+                        var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
+                        var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
+                        var endY = y + SquareSize;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 2:
+                case 13:
+                    {
+                        var startX = x + SquareSize;
+                        var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
+                        var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
+                        var endY = y + SquareSize;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 3:
+                case 12:
+                    {
+                        var startX = x;
+                        var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
+                        var endX = x + SquareSize;
+                        var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 4:
+                case 11:
+                    {
+                        var startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
+                        var startY = y;
+                        var endX = x + SquareSize;
+                        var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 5:
+                    {
+                        var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
+                        var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
+                        var startX = x;
+                        var endY = y;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
+                        endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
+                        startY = y + SquareSize;
+                        endX = x + SquareSize;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 6:
+                case 9:
+                    {
+                        var startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
+                        var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
+                        var startY = y;
+                        var endY = y + SquareSize;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 7:
+                case 8:
+                    {
+                        var startX = x;
+                        var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
+                        var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
+                        var endY = y;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+                case 10:
+                    {
+                        var startX = x;
+                        var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
+                        var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
+                        var endY = y + SquareSize;
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
+                        startY = y;
+                        endX = x + SquareSize;
+                        endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
+                        q = q.Enqueue((startX, startY, endX, endY));
+                        break;
+                    }
+            }
+
+            return q;
+        }
+
 
         private void DrawCase((int caseId, CellInfo cellInfo) contourCase, int x, int y, Graphics g, (Pen Pen, Brush Brush) color, float f)
         {
