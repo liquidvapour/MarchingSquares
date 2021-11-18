@@ -17,7 +17,7 @@ namespace MarchingSquares
 
         private Func<float, float, float> _f;
 
-        private readonly Lines lines = new Lines();
+        private Lines lines = new Lines();
 
         private readonly BubbleFunction _bubbleFunction;
 
@@ -235,7 +235,7 @@ namespace MarchingSquares
 
     public struct Lines
     {
-        internal int Length;
+        public int Length;
 
         public readonly float[] StartX = new float[1024];
         public readonly float[] StartY = new float[1024];
