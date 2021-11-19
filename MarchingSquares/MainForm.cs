@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace MarchingSquares
@@ -26,6 +28,9 @@ namespace MarchingSquares
         private readonly (Pen Pens, Brush Brush) _paleVioletRed = (new Pen(Color.PaleVioletRed, 3), Brushes.PaleVioletRed);
         private readonly Bubbles _bubbles;
 
+        private readonly Stopwatch thinkTime = new();
+        private readonly Stopwatch drawTime = new();
+
         public MainForm()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
@@ -50,8 +55,25 @@ namespace MarchingSquares
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.FillRectangle(Brushes.Aquamarine, ClientRectangle);
+            thinkTime.Start();
+            CalculateLines();
+            thinkTime.Stop();
+            e.Graphics.DrawString(
+                GetTimeElapsedMicroseconds(thinkTime).ToString("N", CultureInfo.InvariantCulture), 
+                Font, 
+                Brushes.Black, 
+                0, 
+                0);
+            thinkTime.Reset();
+            DrawLines(lines, _indianRed, e.Graphics);
+            e.Graphics.DrawString(lines.Length.ToString(),Font, Brushes.Black, 0, 40);
+            Invalidate();
+        }
+
+        private void CalculateLines()
+        {
             var lineCount = 0;
-            for (var y = 0; y < ClientSize.Height; y+=SquareSize)
+            for (var y = 0; y < ClientSize.Height; y += SquareSize)
             {
                 for (var x = 0; x < ClientSize.Width; x += SquareSize)
                 {
@@ -69,22 +91,30 @@ namespace MarchingSquares
                         lineCount += 1;
                     }
                 }
-
             }
+
             lines.Length = lineCount;
-            DrawLines(lines, _indianRed, e.Graphics);
-            Invalidate();
         }
+
+        private static float GetTimeElapsedMicroseconds(Stopwatch stopwatch) => (float)stopwatch.ElapsedTicks / (float)Stopwatch.Frequency / 0.000001f;
 
         private void DrawLines(
             Lines lines, 
             (Pen Pens, Brush Brush) color, 
             Graphics e)
         {
+            drawTime.Start();
             for (var i = 0; i < lines.Length; i++)
             {
                 e.DrawLine(color.Pens, lines.StartX[i], lines.StartY[i], lines.EndX[i], lines.EndY[i]);
             }
+            drawTime.Stop();
+            e.DrawString(
+                GetTimeElapsedMicroseconds(drawTime).ToString("N", CultureInfo.InvariantCulture), 
+                Font, 
+                Brushes.Black, 
+                0, 20);
+            drawTime.Reset();
         }
 
         private float FindPoint(float xa, float xb, float ua, float ub, float f) => 
