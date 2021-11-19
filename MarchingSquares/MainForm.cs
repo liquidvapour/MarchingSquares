@@ -30,6 +30,9 @@ namespace MarchingSquares
 
         private readonly Stopwatch thinkTime = new();
         private readonly Stopwatch drawTime = new();
+        private readonly Stopwatch _wallTime = Stopwatch.StartNew();
+        private int frames = 0;
+        private float lastFrameTime = 0.0f;
 
         public MainForm()
         {
@@ -54,20 +57,41 @@ namespace MarchingSquares
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.FillRectangle(Brushes.Aquamarine, ClientRectangle);
+            var thisFrameTime = GetTimeElapsedMicroseconds(_wallTime);
+            if (lastFrameTime > 0.0f)
+            {
+                var dt = thisFrameTime - lastFrameTime;
+                Draw(dt, e.Graphics);
+            }
+            lastFrameTime = thisFrameTime;
+
+            Invalidate();
+        }
+
+        private void Draw(float dt, Graphics gc)
+        {
+            gc.FillRectangle(Brushes.Aquamarine, ClientRectangle);
             thinkTime.Start();
             CalculateLines();
             thinkTime.Stop();
-            e.Graphics.DrawString(
-                GetTimeElapsedMicroseconds(thinkTime).ToString("N", CultureInfo.InvariantCulture), 
-                Font, 
-                Brushes.Black, 
-                0, 
+            gc.DrawString(
+                GetTimeElapsedMicroseconds(thinkTime).ToString("N", CultureInfo.InvariantCulture),
+                Font,
+                Brushes.Black,
+                0,
                 0);
             thinkTime.Reset();
-            DrawLines(lines, _indianRed, e.Graphics);
-            e.Graphics.DrawString(lines.Length.ToString(),Font, Brushes.Black, 0, 40);
-            Invalidate();
+            DrawLines(lines, _indianRed, gc);
+            gc.DrawString(lines.Length.ToString(), Font, Brushes.Black, 0, 40);
+            DoFps(gc, dt);
+        }
+
+        private void DoFps(Graphics gc, float dt)
+        {
+            var fps = (100000.0f / dt);
+            Console.WriteLine(dt);
+            gc.DrawString(fps.ToString("N"), Font, Brushes.Black, 0, 60);
+            gc.DrawString(dt.ToString("N"), Font, Brushes.Black, 0 , 80);
         }
 
         private void CalculateLines()
