@@ -65,8 +65,16 @@ namespace MarchingSquares
         private void Draw(float dt, Graphics gc)
         {
             gc.FillRectangle(Brushes.Aquamarine, ClientRectangle);
+
+            MoveBubble2(dt);
+            MoveBubble3(dt);
+
             _thinkTime.Start();
+
+
+
             var lines = CalculateLines(dt);
+
             _thinkTime.Stop();
             gc.DrawString(
                 GetTimeElapsedMicroseconds(_thinkTime).ToString("N", CultureInfo.InvariantCulture),
@@ -78,6 +86,36 @@ namespace MarchingSquares
             DrawLines(lines, _indianRed, gc);
             gc.DrawString(lines.Length.ToString(), Font, Brushes.Black, 0, 40);
             DoFps(gc, dt);
+        }
+
+        private float bubble2Speed = 0.00005f;
+
+
+        private void MoveBubble2(float dt)
+        {
+            var (x, y) = _bubbles.Get(2);
+            var distInFrame = bubble2Speed / (1 / dt);
+            y += distInFrame;
+            if (y < 0.0f || y > ClientRectangle.Height)
+            {
+                bubble2Speed = -1 * bubble2Speed;
+            }
+
+            _bubbles.Set(2, x, y);
+        }
+
+        private float bubble3Speed = 0.0001f;
+        private void MoveBubble3(float dt)
+        {
+            var (x, y) = _bubbles.Get(3);
+            var distInFrame = bubble3Speed / (1 / dt);
+            x += distInFrame;
+            if (x < 0.0f || x > ClientRectangle.Width)
+            {
+                bubble3Speed = -1 * bubble3Speed;
+            }
+
+            _bubbles.Set(3, x, y);
         }
 
         private void DoFps(Graphics gc, float dt)

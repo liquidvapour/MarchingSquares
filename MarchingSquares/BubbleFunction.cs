@@ -51,5 +51,16 @@ namespace MarchingSquares
                 Y[i] = bubbles[i].y;
             }
         }
+
+        public void Set(int index, float x, float y)
+        {
+            X[index] = x;
+            Y[index] = y;
+        }
+
+        public (float x, float y) Get(int index)
+        {
+            return (X[index], Y[index]);
+        }
     }
 }
