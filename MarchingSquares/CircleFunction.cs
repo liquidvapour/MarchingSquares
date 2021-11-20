@@ -11,7 +11,7 @@ namespace MarchingSquares
             _context = context;
         }
 
-        public float CalculateDistance(float cx, float cy)
+        public float CalculateDistance(int cx, int cy)
         {
             var l = _context.MouseX - cx;
             var h = _context.MouseY - cy;

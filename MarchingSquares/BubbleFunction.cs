@@ -11,7 +11,7 @@ namespace MarchingSquares
             _bubbles = bubbles;
         }
 
-        public float CalculateDistance(float cx, float cy)
+        public float CalculateDistance(int cx, int cy)
         {
             var dist = 0.0f;
             for (var i = 0; i < _bubbles.Length; i++)

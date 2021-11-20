@@ -10,13 +10,12 @@ namespace MarchingSquares
     public partial class MainForm : Form
     {
         private const int SquareSize = 8;
-        private const int HalfSquareSize = SquareSize / 2;
         private const int BLIndex = 1;
         private const int BRIndex = 2;
         private const int TRIndex = 4;
         private const int TLIndex = 8;
 
-        private Func<float, float, float> _f;
+        private Func<int, int, float> _f;
 
         private readonly BubbleFunction _bubbleFunction;
 
@@ -43,12 +42,7 @@ namespace MarchingSquares
                 (32, 300, 300));
             _bubbleFunction = new BubbleFunction(_bubbles);
 
-            SetDistanceFunction(_bubbleFunction);
-        }
-
-        private void SetDistanceFunction(IHaveADistanceFunction functionProvider)
-        {
-            _f = functionProvider.CalculateDistance;
+            _f = _bubbleFunction.CalculateDistance;
         }
 
 
@@ -101,9 +95,9 @@ namespace MarchingSquares
             {
                 for (var x = 0; x < ClientSize.Width; x += SquareSize)
                 {
-                    var f = 1.0f; //1 - (float)Math.Sin(totalTime / 1000000.0f);
-                    var contourCase = GetContourCase(x, y, f, _f);
-                    lineCount += GetCasePoints(contourCase, x, y, f, lines, lineCount);
+                    const float threshold = 1.0f;
+                    var contourCase = GetContourCase(x, y, threshold, _f);
+                    lineCount += GetCasePoints(contourCase, x, y, threshold, lines, lineCount);
 
                 }
             }
@@ -275,20 +269,21 @@ namespace MarchingSquares
             return (dist >= threshold, dist);
         }
 
-        private static (bool inside, float dist) TopLeftIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
+        private static (bool inside, float dist) TopLeftIn(int ix, int iy, float threshold, Func<int, int, float> func) => 
             InsideThreshold(func(ix, iy), threshold);
 
-        private static (bool inside, float dist) TopRightIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
+        private static (bool inside, float dist) TopRightIn(int ix, int iy, float threshold, Func<int, int, float> func) => 
             InsideThreshold(func(ix + SquareSize, iy), threshold);
 
-        private static (bool inside, float dist) BottomLeftIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
+        private static (bool inside, float dist) BottomLeftIn(int ix, int iy, float threshold, Func<int, int, float> func) => 
             InsideThreshold(func(ix , iy + SquareSize), threshold);
 
-        private static (bool inside, float dist) BottomRightIn(int ix, int iy, float threshold, Func<float, float, float> func) => 
+        private static (bool inside, float dist) BottomRightIn(int ix, int iy, float threshold, Func<int, int, float> func) => 
             InsideThreshold(func(ix + SquareSize, iy + SquareSize), threshold);
 
-        private static (int caseId, CellInfo cellInfo) GetContourCase(int ix, int iy, float threshold, Func<float, float, float> func)
+        private static (int caseId, CellInfo cellInfo) GetContourCase(int ix, int iy, float threshold, Func<int, int, float> func)
         {
+
             var bottomLeft = BottomLeftIn(ix, iy, threshold, func);
             var blNum = bottomLeft.inside? BLIndex: 0;
             var bottomRight = BottomRightIn(ix, iy, threshold, func);
@@ -299,8 +294,9 @@ namespace MarchingSquares
             var tlNum = topLeft.inside ? TLIndex: 0;
 
             var caseId = blNum + brNum + trNum + tlNum;
-            return (caseId, new CellInfo(bottomLeft.dist, bottomRight.dist, topRight.dist, topLeft.dist));
+            return (caseId, new(bottomLeft.dist, bottomRight.dist, topRight.dist, topLeft.dist));
         }
+
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {

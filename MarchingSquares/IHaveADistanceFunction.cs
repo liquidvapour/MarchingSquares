@@ -2,6 +2,6 @@
 {
     public interface IHaveADistanceFunction
     {
-        float CalculateDistance(float cx, float cy);
+        float CalculateDistance(int cx, int cy);
     }
 }
