@@ -29,6 +29,7 @@ namespace MarchingSquares
         private readonly Stopwatch _wallTime = Stopwatch.StartNew();
         private int frames = 0;
         private float _lastFrameTime;
+        //private Lines _lines = new Lines();
 
         public MainForm()
         {
@@ -39,7 +40,9 @@ namespace MarchingSquares
             InitializeComponent();
             _bubbles = new Bubbles(
                 (64.0f, 0.0f, 0.0f),
-                (32, 300, 300));
+                (32, 300, 300),
+                (40, 450, 250),
+                (38, 400, 100));
             _bubbleFunction = new BubbleFunction(_bubbles);
 
             _f = _bubbleFunction.CalculateDistance;
@@ -63,8 +66,7 @@ namespace MarchingSquares
         {
             gc.FillRectangle(Brushes.Aquamarine, ClientRectangle);
             _thinkTime.Start();
-            var lines = new Lines();
-            CalculateLines(dt, lines);
+            var lines = CalculateLines(dt);
             _thinkTime.Stop();
             gc.DrawString(
                 GetTimeElapsedMicroseconds(_thinkTime).ToString("N", CultureInfo.InvariantCulture),
@@ -87,8 +89,9 @@ namespace MarchingSquares
         }
 
         private static float totalTime;
-        private void CalculateLines(float dt, Lines lines)
+        private Lines CalculateLines(float dt)
         {
+            var lines = new Lines();
             totalTime += dt;
             var lineCount = 0;
             for (var y = 0; y < ClientSize.Height; y += SquareSize)
@@ -103,6 +106,7 @@ namespace MarchingSquares
             }
 
             lines.Length = lineCount;
+            return lines;
         }
 
         private static float GetTimeElapsedMicroseconds(Stopwatch stopwatch) => 
@@ -114,6 +118,7 @@ namespace MarchingSquares
             Graphics e)
         {
             _drawTime.Start();
+            
             for (var i = 0; i < lines.Length; i++)
             {
                 e.DrawLine(color.Pens, lines.StartX[i], lines.StartY[i], lines.EndX[i], lines.EndY[i]);
