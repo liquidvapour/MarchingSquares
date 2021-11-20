@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
@@ -19,8 +18,6 @@ namespace MarchingSquares
 
         private Func<float, float, float> _f;
 
-        private Lines lines = new Lines();
-
         private readonly BubbleFunction _bubbleFunction;
 
         private readonly (Pen Pens, Brush Brush) _red = (new Pen(Color.Red, 3), Brushes.Red);
@@ -28,11 +25,11 @@ namespace MarchingSquares
         private readonly (Pen Pens, Brush Brush) _paleVioletRed = (new Pen(Color.PaleVioletRed, 3), Brushes.PaleVioletRed);
         private readonly Bubbles _bubbles;
 
-        private readonly Stopwatch thinkTime = new();
-        private readonly Stopwatch drawTime = new();
+        private readonly Stopwatch _thinkTime = new();
+        private readonly Stopwatch _drawTime = new();
         private readonly Stopwatch _wallTime = Stopwatch.StartNew();
         private int frames = 0;
-        private float lastFrameTime = 0.0f;
+        private float _lastFrameTime;
 
         public MainForm()
         {
@@ -58,12 +55,12 @@ namespace MarchingSquares
         protected override void OnPaint(PaintEventArgs e)
         {
             var thisFrameTime = GetTimeElapsedMicroseconds(_wallTime);
-            if (lastFrameTime > 0.0f)
+            if (_lastFrameTime > 0.0f)
             {
-                var dt = thisFrameTime - lastFrameTime;
+                var dt = thisFrameTime - _lastFrameTime;
                 Draw(dt, e.Graphics);
             }
-            lastFrameTime = thisFrameTime;
+            _lastFrameTime = thisFrameTime;
 
             Invalidate();
         }
@@ -71,16 +68,17 @@ namespace MarchingSquares
         private void Draw(float dt, Graphics gc)
         {
             gc.FillRectangle(Brushes.Aquamarine, ClientRectangle);
-            thinkTime.Start();
-            CalculateLines();
-            thinkTime.Stop();
+            _thinkTime.Start();
+            var lines = new Lines();
+            CalculateLines(dt, lines);
+            _thinkTime.Stop();
             gc.DrawString(
-                GetTimeElapsedMicroseconds(thinkTime).ToString("N", CultureInfo.InvariantCulture),
+                GetTimeElapsedMicroseconds(_thinkTime).ToString("N", CultureInfo.InvariantCulture),
                 Font,
                 Brushes.Black,
                 0,
                 0);
-            thinkTime.Reset();
+            _thinkTime.Reset();
             DrawLines(lines, _indianRed, gc);
             gc.DrawString(lines.Length.ToString(), Font, Brushes.Black, 0, 40);
             DoFps(gc, dt);
@@ -94,66 +92,59 @@ namespace MarchingSquares
             gc.DrawString(dt.ToString("N"), Font, Brushes.Black, 0 , 80);
         }
 
-        private void CalculateLines()
+        private static float totalTime;
+        private void CalculateLines(float dt, Lines lines)
         {
+            totalTime += dt;
             var lineCount = 0;
             for (var y = 0; y < ClientSize.Height; y += SquareSize)
             {
                 for (var x = 0; x < ClientSize.Width; x += SquareSize)
                 {
-                    var f = 1.0f;
+                    var f = 1.0f; //1 - (float)Math.Sin(totalTime / 1000000.0f);
                     var contourCase = GetContourCase(x, y, f, _f);
-                    var r = GetCasePoints(contourCase, x, y, f);
+                    lineCount += GetCasePoints(contourCase, x, y, f, lines, lineCount);
 
-                    while (!r.IsEmpty)
-                    {
-                        r = r.Dequeue(out var i);
-                        lines.StartX[lineCount] = i.startX;
-                        lines.EndX[lineCount] = i.endX;
-                        lines.StartY[lineCount] = i.startY;
-                        lines.EndY[lineCount] = i.endY;
-                        lineCount += 1;
-                    }
                 }
             }
 
             lines.Length = lineCount;
         }
 
-        private static float GetTimeElapsedMicroseconds(Stopwatch stopwatch) => (float)stopwatch.ElapsedTicks / (float)Stopwatch.Frequency / 0.000001f;
+        private static float GetTimeElapsedMicroseconds(Stopwatch stopwatch) => 
+            stopwatch.ElapsedTicks / (float)Stopwatch.Frequency / 0.000001f;
 
         private void DrawLines(
             Lines lines, 
             (Pen Pens, Brush Brush) color, 
             Graphics e)
         {
-            drawTime.Start();
+            _drawTime.Start();
             for (var i = 0; i < lines.Length; i++)
             {
                 e.DrawLine(color.Pens, lines.StartX[i], lines.StartY[i], lines.EndX[i], lines.EndY[i]);
             }
-            drawTime.Stop();
+            _drawTime.Stop();
             e.DrawString(
-                GetTimeElapsedMicroseconds(drawTime).ToString("N", CultureInfo.InvariantCulture), 
+                GetTimeElapsedMicroseconds(_drawTime).ToString("N", CultureInfo.InvariantCulture), 
                 Font, 
                 Brushes.Black, 
                 0, 20);
-            drawTime.Reset();
+            _drawTime.Reset();
         }
 
         private float FindPoint(float xa, float xb, float ua, float ub, float f) => 
             xa + (f - ua) / (ub - ua) * (xb - xa);
 
-        private ImmutableQueue<(float startX, float startY, float endX, float endY)> GetCasePoints((int caseId, CellInfo cellInfo) contourCase, float x, float y, float f)
+        private int GetCasePoints((int caseId, CellInfo cellInfo) contourCase, float x, float y, float f, Lines lines,
+            int lineCount)
         {
-            var q = ImmutableQueue<(float startX, float startY, float endX, float endY)>.Empty;
+            
             switch (contourCase.caseId)
             {
                 case 0:
-                    break;
                 case 15:
-                    //g.FillRectangle(brush, x, y, SquareSize, SquareSize);
-                    break;
+                    return default;
                 case 1:
                 case 14:
                     {
@@ -161,8 +152,11 @@ namespace MarchingSquares
                         var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
                         var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
                         var endY = y + SquareSize;
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 1;
                     }
                 case 2:
                 case 13:
@@ -171,8 +165,11 @@ namespace MarchingSquares
                         var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
                         var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
                         var endY = y + SquareSize;
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 1;
                     }
                 case 3:
                 case 12:
@@ -181,8 +178,11 @@ namespace MarchingSquares
                         var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
                         var endX = x + SquareSize;
                         var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 1;
                     }
                 case 4:
                 case 11:
@@ -191,8 +191,11 @@ namespace MarchingSquares
                         var startY = y;
                         var endX = x + SquareSize;
                         var endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 1;
                     }
                 case 5:
                     {
@@ -200,13 +203,20 @@ namespace MarchingSquares
                         var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
                         var startX = x;
                         var endY = y;
-                        q = q.Enqueue((startX, startY, endX, endY));
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        lineCount++;
                         startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
                         endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
                         startY = y + SquareSize;
                         endX = x + SquareSize;
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 2;
                     }
                 case 6:
                 case 9:
@@ -215,8 +225,11 @@ namespace MarchingSquares
                         var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
                         var startY = y;
                         var endY = y + SquareSize;
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 1;
                     }
                 case 7:
                 case 8:
@@ -225,8 +238,11 @@ namespace MarchingSquares
                         var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
                         var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
                         var endY = y;
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 1;
                     }
                 case 10:
                     {
@@ -234,17 +250,24 @@ namespace MarchingSquares
                         var startY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.BL, f);
                         var endX = FindPoint(x, x + SquareSize, contourCase.cellInfo.BL, contourCase.cellInfo.BR, f);
                         var endY = y + SquareSize;
-                        q = q.Enqueue((startX, startY, endX, endY));
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        lineCount++;
                         startX = FindPoint(x, x + SquareSize, contourCase.cellInfo.TL, contourCase.cellInfo.TR, f);
                         startY = y;
                         endX = x + SquareSize;
                         endY = FindPoint(y, y + SquareSize, contourCase.cellInfo.TR, contourCase.cellInfo.BR, f);
-                        q = q.Enqueue((startX, startY, endX, endY));
-                        break;
+                        lines.StartX[lineCount] = startX;
+                        lines.StartY[lineCount] = startY;
+                        lines.EndX[lineCount] = endX;
+                        lines.EndY[lineCount] = endY;
+                        return 2;
                     }
+                default:
+                    throw new InvalidOperationException($"Case {contourCase.caseId} not supported");
             }
-
-            return q;
         }
 
         private static (bool inside, float dist) InsideThreshold(float dist, float threshold)
@@ -287,16 +310,30 @@ namespace MarchingSquares
         }
     }
 
-    public struct Lines
+    public ref struct Lines
     {
-        public int Length;
+        private const int DefaultLength = 1024;
+        public int Length { get; set; }
 
-        public readonly float[] StartX = new float[1024];
-        public readonly float[] StartY = new float[1024];
-        public readonly float[] EndX = new float[1024];
-        public readonly float[] EndY = new float[1024];
+        public readonly float[] StartX;
+        public readonly float[] StartY;
+        public readonly float[] EndX;
+        public readonly float[] EndY;
 
-    }
+        public Lines() : this(DefaultLength)
+        {
+            
+        }
+        public Lines(int length)
+        {
+            StartX = new float[DefaultLength];
+            StartY = new float[DefaultLength];
+            EndX = new float[DefaultLength];
+            EndY = new float[DefaultLength];
+            Length = length;
+        }
+
+}
 
     internal readonly struct CellInfo
     {
